@@ -3,11 +3,65 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script>
 
-$(document).ready(function(){
-  $(document).mousemove(function(event){
-  	resizeCircles();
-  });
-});
+/*
+<script src="./d3/d3.v3.min.js" charset="utf-8"
+<script src="./jquery/jquery.min.js"
+*/
+
+/*********************************MOUSE STOP EVENT***************************************/
+(function($) {
+    // public vars
+    $.mousestopDelay = 50;
+
+    // special event
+    $.event.special.mousestop = {
+        setup: function(data) {
+            $(this).data('mousestop', {delay: data})
+                   .bind('mouseenter.mousestop', mouseenterHandler)
+                   .bind('mouseleave.mousestop', mouseleaveHandler);
+        },
+        teardown: function() {
+            $(this).removeData('mousestop')
+                   .unbind('.mousestop');
+        }
+    };
+
+    // private methods
+    function mouseenterHandler() {
+        if (typeof this.timeout === 'undefined') {
+            this.timeout = null;
+        }
+        
+        var elem = $(this),
+            data = elem.data('mousestop'),
+            delay = data.delay || $.mousestopDelay;
+
+        elem.bind('mousemove.mousestop', function() {
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(function() {
+                elem.trigger('mousestop');
+                elem.unbind('mousemove.mousestop');
+            }, delay);
+        });
+    };
+    
+    function mouseleaveHandler() {
+        var elem = $(this);
+       // elem.unbind('mousemove.mousestop');
+        clearTimeout(this.timeout);
+    };
+
+    // shorthand alias
+    $.fn.mousestop = function(data, fn) {
+        if (fn == null) {
+            fn = data;
+            data = null;
+        }
+
+        return arguments.length > 0 ? this.bind('mousestop', data, fn) : this.trigger('mousestop');
+    };
+})(jQuery);
+/*******************************END SPECIAL EVENTS************************************/
 
 //generate 1 random number
 function generateRandomNumber(mean,variance) {
@@ -27,24 +81,97 @@ function generateRandomArray(mean, variance, size) {
 	return randomData;
 }
 
+//svg canvas
+var svgCanvas;
+
 //samples of random data
 var data1,data2,data3;
 
 //UI elements
 var set1,set2,set3;
 
+//circle matrix
+var circleMatrix;
+var rows = 30;
+var columns = 30;
+
+var svgCanvas;
+
 //resizeData
 function resizeCircles() {
 
 	console.log("refactoring data");
-	d3.selectAll("circle").data(data1).transition().attr("r",function(d) {return Math.random()*20;})
+	//d3.selectAll("circle").data(data1).transition().attr("r",function(d) {return Math.random()*20;})
 
-	//generate all new numbers
-	data1 = generateRandomArray(10,2,10);
+	d3.selectAll("circle").transition().duration(750).delay(1000).attr("r",function(d) {return Math.random()*20});
+	
+	//data1 = generateRandomArray(10,2,10);
 
 }
 
+//create new Data Circle
+var DataCircle = function(svgCanvas) {
+
+	//construct the circle element right away
+	this.svgCanvas = svgCanvas;
+	this.element = document.createElementNS("http://www.w3.org/2000/svg","circle");
+	this.cx = 0
+	this.cy = 0;
+	this.r = 0;
+}
+
+DataCircle.prototype = {
+
+	setCx : function(cx) {
+		this.cx = cx;
+		this.element.setAttributeNS(null,"cx",this.cx);
+	},
+	setCy : function(cy) {
+		this.cy = cy;
+		this.element.setAttributeNS(null,"cy",this.cy);
+	},
+	setR : function(r) {
+		this.r = r;
+		this.element.setAttributeNS(null,"r",this.r);
+		this.element.setAttributeNS(null, "fill", "green");
+	}
+}
+
 window.onload = function(){
+
+
+	//circleMatrix
+	circleMatrix = new Array();
+
+	//init svg canvas
+	svgCanvas = document.getElementById("svgCanvas");
+
+	//init circle matrix
+	for (var i = 0; i < rows; i++) {
+		circleMatrix[i] = new Array();
+		for (var j = 0; j < columns;j++) {
+			circleMatrix[i][j] = new DataCircle();
+			
+			//put this in a setter
+			circleMatrix[i][j].setCx(100 + i*20 + Math.random()*30);
+			circleMatrix[i][j].setCy(100 + j*20 + Math.random()*30);
+			circleMatrix[i][j].setR(generateRandomNumber(5,10));
+
+
+			//circleMatrix[i][j].cx = 100+ j*20;
+			//circleMatrix[i][j].cy = 100+ i*20;
+			//circleMatrix[i][j].r = 10;
+
+			//set initital properties of SVG circle lattice (put this all in a setter)
+			//circleMatrix[i][j].element.setAttributeNS(null,"cx",circleMatrix[i][j].cx);
+			//circleMatrix[i][j].element.setAttributeNS(null,"cy",circleMatrix[i][j].cy);
+			//circleMatrix[i][j].element.setAttributeNS(null,"r",circleMatrix[i][j].r);
+			//circleMatrix[i][j].element.setAttributeNS(null, "fill", "green");
+			
+			//add to the svg canvas each element of the circle matrix
+			svgCanvas.appendChild(circleMatrix[i][j].element);
+		}
+	}
 
 	//generte 3 sample sets of random data
 	data1 = generateRandomArray(10,2,10);
@@ -61,34 +188,32 @@ window.onload = function(){
 	set2.innerHTML = data2.toString();
 	set3.innerHTML = data3.toString();
 
-	//we select all data using select all to select the enter
-	//body, we can append to any tage this way
-	/*
-	what does the enter o when do you use it, does enter imply data entry like entering nodes to add whenever you do an enter hwhatdo you need neter, is appaend the same a sadd chidl in d3
-	*/
 	console.log("Initating d3");
-	d3.select("body").transition().style("background-color","blue");
-	d3.selectAll("circle").transition().duration(750).delay(100).attr("r",function(d) {return 20});
-	//you can do jquerytransitions with d3 by doing select items so jquery and d3 are similar in tht resspect can you only o i
-	d3.select("svg").selectAll("p").data(data1).enter().append("circle").text(function(d) {return "BLAH!!!";});
+
+	setInterval(resizeCircles,500);
+
+}
+
+function addRow() {
+	circleMatrix[circleMatrix.size] = new Array();	
 }
 
 </script>
 
 <body>
 
-<div>
-	<p id="set1">Data:</p>
-	<p id="set2">Data:</p>
-	<p id="set3">Data:</p>
-</div>
+	<div>
+		<p id="set1">Data:</p>
+		<p id="set2">Data:</p>
+		<p id="set3">Data:</p>
+	</div>
 
-<div id="shapetest">
-	<svg id="svgcanvas" height="100" width="100">
-		<circle id="testCircle" cx="50" cy="50" r="40" ></circle>
-	</svg>
-</div>
-<button onclick="resizeCircles()">Resize</button>
+	<div id="shapetest">
+		<svg id="svgCanvas" height="500" width="500">
+			<circle id="testCircle" cx="50" cy="50" r="40" ></circle>
+		</svg>
+	</div>
+	<button onclick="resizeCircles()">Resize</button>
 </body>
 
 </html>
