@@ -1,0 +1,94 @@
+<html>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+
+$(document).ready(function(){
+  $(document).mousemove(function(event){
+  	resizeCircles();
+  });
+});
+
+//generate 1 random number
+function generateRandomNumber(mean,variance) {
+	return variance*Math.random() + mean;
+}
+
+//generate random array of numbers
+function generateRandomArray(mean, variance, size) {
+
+	var randomData = new Array();
+
+	for(var i = 0; i < size; i++) {
+		var data = variance*Math.random() + mean;
+		randomData.push(data.toPrecision(4));
+	}
+
+	return randomData;
+}
+
+//samples of random data
+var data1,data2,data3;
+
+//UI elements
+var set1,set2,set3;
+
+//resizeData
+function resizeCircles() {
+
+	console.log("refactoring data");
+	d3.selectAll("circle").data(data1).transition().attr("r",function(d) {return Math.random()*20;})
+
+	//generate all new numbers
+	data1 = generateRandomArray(10,2,10);
+
+}
+
+window.onload = function(){
+
+	//generte 3 sample sets of random data
+	data1 = generateRandomArray(10,2,10);
+	data2 = generateRandomArray(5,4,10);
+	data3 = generateRandomArray(0,10,5);
+
+	//associate UI elements with HTML
+	set1 = document.getElementById("set1");
+	set2 = document.getElementById("set2");
+	set3 = document.getElementById("set3");
+
+	//add data to elements
+	set1.innerHTML = data1.toString();
+	set2.innerHTML = data2.toString();
+	set3.innerHTML = data3.toString();
+
+	//we select all data using select all to select the enter
+	//body, we can append to any tage this way
+	/*
+	what does the enter o when do you use it, does enter imply data entry like entering nodes to add whenever you do an enter hwhatdo you need neter, is appaend the same a sadd chidl in d3
+	*/
+	console.log("Initating d3");
+	d3.select("body").transition().style("background-color","blue");
+	d3.selectAll("circle").transition().duration(750).delay(100).attr("r",function(d) {return 20});
+	//you can do jquerytransitions with d3 by doing select items so jquery and d3 are similar in tht resspect can you only o i
+	d3.select("svg").selectAll("p").data(data1).enter().append("circle").text(function(d) {return "BLAH!!!";});
+}
+
+</script>
+
+<body>
+
+<div>
+	<p id="set1">Data:</p>
+	<p id="set2">Data:</p>
+	<p id="set3">Data:</p>
+</div>
+
+<div id="shapetest">
+	<svg id="svgcanvas" height="100" width="100">
+		<circle id="testCircle" cx="50" cy="50" r="40" ></circle>
+	</svg>
+</div>
+<button onclick="resizeCircles()">Resize</button>
+</body>
+
+</html>
